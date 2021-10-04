@@ -14,23 +14,29 @@ export class AppService {
   constructor(private readonly csvParser: CsvParser) {}
 
   async findAll(query: FindAllQuery): Promise<ParsedData<Pokemon>> {
-    const stream = await createReadStream(this.path);
-    return this.convertCsvToObj(stream, query);
+    try {
+      const stream = await createReadStream(this.path);
+      return this.convertCsvToObj(stream, query);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async findOne(id: string): Promise<Pokemon[]> {
-    const stream = await createReadStream(this.path);
-    const pokemons: ParsedData<Pokemon> = await this.convertCsvToObj(stream);
-    return pokemons.list.filter((pokemon) => pokemon['#'] === id);
+    try {
+      const stream = await createReadStream(this.path);
+      const pokemons: ParsedData<Pokemon> = await this.convertCsvToObj(stream);
+      return pokemons.list.filter((pokemon) => pokemon['#'] === id);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async create(body: Pokemon): Promise<Pokemon> {
-    const stream = await createReadStream(this.path);
-    const csvList = await this.streamToString(stream);
-    const parsedPokemon = this.convertObjToCsv(body);
-    console.log('to add', parsedPokemon);
-
     try {
+      const stream = await createReadStream(this.path);
+      const csvList = await this.streamToString(stream);
+      const parsedPokemon = this.convertObjToCsv(body);
       await writeFileSync(this.path, csvList + parsedPokemon);
       return body;
     } catch (error) {
@@ -39,20 +45,28 @@ export class AppService {
   }
 
   async delete(id: string) {
-    const stream = await createReadStream(this.path);
-    const pokemons: ParsedData<Pokemon> = await this.convertCsvToObj(stream);
-    const filteredList = pokemons.list.filter((pokemon) => pokemon['#'] !== id);
-    let csv = this.columns;
-    filteredList.map((pokemon) => {
-      csv += this.convertObjToCsv(pokemon);
-    });
-    await writeFileSync(this.path, csv);
-    return;
+    try {
+      const stream = await createReadStream(this.path);
+      const pokemons: ParsedData<Pokemon> = await this.convertCsvToObj(stream);
+      const filteredList = pokemons.list.filter((pokemon) => pokemon['#'] !== id);
+      let csv = this.columns;
+      filteredList.map((pokemon) => {
+        csv += this.convertObjToCsv(pokemon);
+      });
+      await writeFileSync(this.path, csv);
+      return;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async update(id: string, body: Pokemon) {
-    await this.delete(id);
-    return await this.create(body);
+    try {
+      await this.delete(id);
+      return await this.create(body);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   private async streamToString(stream: ReadStream) {
